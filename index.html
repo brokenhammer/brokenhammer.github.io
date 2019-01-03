@@ -19,7 +19,7 @@
             blog_html:[]},
         created: function(){
             var vm = this
-            var host = "https://ximul.tk/"
+            var host = "https://www.ximul.tk/"
             axios.get(host+'api/get_all_blogs')
             .then(function(response){
                 vm.blog_addrs = response.data.sort().reverse()

@@ -5,8 +5,17 @@
 <link rel="stylesheet" href="static/bootstrap.min.css"/>
 <link type="text/css" rel="stylesheet" href="static/katex.min.css">
 <div id="app">
-    <button @click="slt1">第一页</button>
-    <button @click="slt2">第二页</button>
+    <div class="btn-toolbar" role="toolbar" aria-label="...">
+        <div class="btn-group" role="group">
+            <button class="btn btn-default" @click="minus()"><<上一页</button>
+        </div>
+        <div class="btn-group" role="group" aria-label="...">
+            <button v-for="p in blog_pages" @click="emit(p)" v-bind:class="btnstyle(p)">{{p}}</button>
+        </div>
+        <div class="btn-group" role="group">
+            <button class="btn btn-default" @click="plus()">下一页>></button>
+        </div>
+    </div>
     <div v-for="blog in blog_list" class="markdown-body editormd-html-preview">
         <h1>{{blog.title}}</h1>
         <h4>{{blog.date}}</h4>
@@ -21,6 +30,8 @@
             all_addrs:[],
             blog_addrs:[],
             blog_html:[],
+            blog_per_page: 5,
+            slt_page: 0,
             host:"https://www.ximul.tk/"
             },
         methods:{
@@ -37,12 +48,30 @@
                     })
                 });
             }, 
-            slt1: function(){
-                this.blog_addrs = this.all_addrs.slice(0,5)
-                this.get_html()
+            emit(p){
+                this.slt_page = p
             },
-            slt2: function(){
-                this.blog_addrs = this.all_addrs.slice(5, 10)
+            isActive(p){
+                return this.slt_page == p
+            },
+            btnstyle: function(p){
+                return{
+                    'btn': true,
+                    'btn-default': p!=this.slt_page,
+                    'btn-info': p==this.slt_page,
+                    'active': p==this.slt_page
+                }
+            },
+            minus: function(){
+                this.slt_page = Math.max(1, this.slt_page - 1)
+            },
+            plus: function(){
+                this.slt_page = Math.min(this.blog_pages, this.slt_page + 1)
+            }
+        },
+        watch:{
+            slt_page: function(newp, oldp){
+                this.blog_addrs = this.all_addrs.slice((newp-1)*this.blog_per_page, newp*this.blog_per_page)
                 this.get_html()
             }
         },
@@ -51,10 +80,13 @@
             axios.get(vm.host+'api/get_all_blogs')
             .then(function (response) {
                 vm.all_addrs = response.data.sort().reverse()
-                vm.slt1();
+                vm.slt_page = 1
             })
         },
         computed:{
+            blog_pages: function(){
+                return Math.ceil(this.all_addrs.length / this.blog_per_page)
+            },
             blog_list:function(){
                 var list = [];
                 for (var i=0; i<this.blog_addrs.length; i++){

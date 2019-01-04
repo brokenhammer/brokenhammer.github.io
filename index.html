@@ -5,8 +5,11 @@
 <link rel="stylesheet" href="static/bootstrap.min.css"/>
 <link type="text/css" rel="stylesheet" href="static/katex.min.css">
 <div id="app">
+    <button @click="slt1">第一页</button>
+    <button @click="slt2">第二页</button>
     <div v-for="blog in blog_list" class="markdown-body editormd-html-preview">
         <h1>{{blog.title}}</h1>
+        <h4>{{blog.date}}</h4>
         <span v-html="blog.html"></span>
     </div>
 </div>
@@ -15,24 +18,41 @@
     var app = new Vue({
         el:"#app",
         data:{
+            all_addrs:[],
             blog_addrs:[],
-            blog_html:[]},
-        created: function(){
-            var vm = this
-            var host = "https://www.ximul.tk/"
-            axios.get(host+'api/get_all_blogs')
-            .then(function(response){
-                vm.blog_addrs = response.data.sort().reverse()
+            blog_html:[],
+            host:"https://www.ximul.tk/"
+            },
+        methods:{
+            get_html: function() {
+                var vm = this;
+                vm.blog_html=[];
                 var promises = [];
-                vm.blog_addrs.forEach(element => {
-                    promises.push(axios.get(host+'load_blog_html/'+element))
+                this.blog_addrs.forEach(element => {
+                    promises.push(axios.get(this.host+'load_blog_html/'+element))
                 });
                 axios.all(promises).then(function(results){
                     results.forEach(function(blog_html_data){
                         vm.blog_html.push(blog_html_data.data)
                     })
-                })
-            })            
+                });
+            }, 
+            slt1: function(){
+                this.blog_addrs = this.all_addrs.slice(0,5)
+                this.get_html()
+            },
+            slt2: function(){
+                this.blog_addrs = this.all_addrs.slice(5, 10)
+                this.get_html()
+            }
+        },
+        created: function(){
+            var vm = this
+            axios.get(vm.host+'api/get_all_blogs')
+            .then(function (response) {
+                vm.all_addrs = response.data.sort().reverse()
+                vm.slt1();
+            })
         },
         computed:{
             blog_list:function(){

@@ -1,38 +1,106 @@
+<html>
+<head>
+<meta charset="utf-8">
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 <link rel="stylesheet" href="static/editormd.css" />
 <link rel="stylesheet" href="static/editormd.preview.css" />
 <link rel="stylesheet" href="static/bootstrap.min.css"/>
-<link type="text/css" rel="stylesheet" href="static/katex.min.css">
+<link type="text/css" rel="stylesheet" href="static/katex.min.css"/>
+<style type="text/css">
+body { 
+  background: url(static/bg.jpg) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  height: 100vw;
+}
+.blog-title{ 
+    font-size: 50;
+    text-align: center
+}
+.blog-info{
+    font-size: 24;
+    text-align: center;
+}
+.blog-card{
+    margin:40px; 
+    width: 90%; 
+    background: rgba(255, 255, 255, 0.9);  
+}
+.blog-content{
+    height: 290px; 
+    overflow: hidden;
+}
+.mask{
+    height: 224px;
+    font-size: 24px;
+    margin-top:-160px;
+    padding-top: 160px;
+    padding-bottom: 6px;
+    text-align: center;
+    background: linear-gradient(-180deg,rgba(255,255,255,0) 0%,#fff 70%);
+    opacity: 0.8;
+    z-index: 3544;
+    width: 100%;
+}
+.read-border{
+    box-shadow: 0 2px 4px 0 rgba(0,0,0,0.05);
+    height: 2px;
+    margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
 <div id="app">
     <div class="btn-toolbar" role="toolbar" aria-label="...">
-        <div class="btn-group" role="group">
-            <button class="btn btn-default" @click="minus()"><<上一页</button>
+        <div class="btn-group mr-2" role="group">
+            <button class="btn btn-outline-dark" @click="minus()"><<上一页</button>
         </div>
-        <div class="btn-group" role="group" aria-label="...">
+        <div class="btn-group mr-2" role="group" aria-label="...">
             <button v-for="p in blog_pages" @click="emit(p)" v-bind:class="btnstyle(p)">{{p}}</button>
         </div>
-        <div class="btn-group" role="group">
-            <button class="btn btn-default" @click="plus()">下一页>></button>
+        <div class="btn-group mr-2" role="group">
+            <button class="btn btn-outline-dark" @click="plus()">下一页>></button>
         </div>
     </div>
-    <div v-for="blog in blog_list" class="markdown-body editormd-html-preview">
-        <h1>{{blog.title}}</h1>
-        <h4>{{blog.date}}</h4>
-        <span v-html="blog.html"></span>
+    <blog-card v-for="blog in blog_list" :key="blog.date" :blog="blog" :loading="loading"></blog-card>
     </div>
+
 </div>
 
 <script>
+
+    Vue.component('blog-card', {
+        props:['blog', 'loading', 'fake'],
+        template: `
+        <div class="blog-card markdown-body editormd-html-preview">
+        <div class="blog-title">{{blog.title}}</div>
+        <div class="blog-info"><i class="fas fa-calendar-alt" style="margin-right:20px"></i>{{blog.date}}</div>
+        <!--<div v-if="loading" class="spinner-border">
+            <span class="sr-only">Loading...</span>
+        </div>-->
+        
+        <div v-html="blog.html" class="blog-content"></div>
+        <div class="mask"><div class="read-border"></div>
+        <div class="btn btn-outline-info btn-lg">阅读更多</div></div>
+        </div>
+        
+        `
+    })
     var app = new Vue({
         el:"#app",
         data:{
             all_addrs:[],
             blog_addrs:[],
             blog_html:[],
+            loading: true,
             blog_per_page: 5,
             slt_page: 0,
-            host:"https://www.ximul.tk/"
+            host:"https://www.ximul.tk/",
             },
         methods:{
             get_html: function() {
@@ -43,6 +111,7 @@
                     promises.push(axios.get(this.host+'load_blog_html/'+element))
                 });
                 axios.all(promises).then(function(results){
+                    vm.loading = false
                     results.forEach(function(blog_html_data){
                         vm.blog_html.push(blog_html_data.data)
                     })
@@ -57,7 +126,7 @@
             btnstyle: function(p){
                 return{
                     'btn': true,
-                    'btn-default': p!=this.slt_page,
+                    'btn-outline-dark': p!=this.slt_page,
                     'btn-info': p==this.slt_page,
                     'active': p==this.slt_page
                 }
@@ -71,6 +140,7 @@
         },
         watch:{
             slt_page: function(newp, oldp){
+                this.loading = true
                 this.blog_addrs = this.all_addrs.slice((newp-1)*this.blog_per_page, newp*this.blog_per_page)
                 this.get_html()
             }
@@ -96,11 +166,14 @@
                     list.push({
                         "title":title,
                         "date": date,
-                        "html": this.blog_html[i]})
+                        "html": this.blog_html[i],
+                        })
                 }
-                return list;
+                return list
             }
         }
         
     })
 </script>
+</body>
+</html>
